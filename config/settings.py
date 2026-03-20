@@ -138,21 +138,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 USE_X_FORWARDED_HOST = True
 
 
-# 12. AWS S3 (Presigned Upload)
+# 12. Notification pipeline
 AWS_REGION = env("AWS_REGION", default=env("AWS_DEFAULT_REGION", default="ap-northeast-2"))
 
-# 12-1. bucket 키는 여러 이름 fallback 지원
-S3_UPLOAD_BUCKET = env(
-    "S3_UPLOAD_BUCKET",
-    default=env("AWS_STORAGE_BUCKET_NAME", default=env("S3_BUCKET", default="")),
-)
-
-S3_UPLOAD_PREFIX = env("S3_UPLOAD_PREFIX", default="uploads/")
-S3_PRESIGN_EXPIRES = env.int("S3_PRESIGN_EXPIRES", default=300)
-
-S3_PUBLIC_BASE_URL = env("S3_PUBLIC_BASE_URL", default=None)
-
-# 13. Notification/Outbox Worker Settings
 NOTIFICATION_EVENT_BUS_NAME = env("NOTIFICATION_EVENT_BUS_NAME", default="stagelog-notification-bus")
 NOTIFICATION_SQS_QUEUE_URL = env("NOTIFICATION_SQS_QUEUE_URL", default="")
 NOTIFICATION_DDB_TABLE_NAME = env("NOTIFICATION_DDB_TABLE_NAME", default="stagelog-notifications")
@@ -161,29 +149,21 @@ NOTIFICATION_CONSUMER_WAIT_TIME_SECONDS = env.int("NOTIFICATION_CONSUMER_WAIT_TI
 NOTIFICATION_DDB_TTL_DAYS = env.int("NOTIFICATION_DDB_TTL_DAYS", default=30)
 NOTIFICATION_DEDUPE_TTL_SECONDS = env.int("NOTIFICATION_DEDUPE_TTL_SECONDS", default=86400)
 NOTIFICATION_UNREAD_CACHE_TTL_SECONDS = env.int("NOTIFICATION_UNREAD_CACHE_TTL_SECONDS", default=3600)
-OUTBOX_PUBLISH_BATCH_SIZE = env.int("OUTBOX_PUBLISH_BATCH_SIZE", default=50)
-OUTBOX_MAX_RETRIES = env.int("OUTBOX_MAX_RETRIES", default=5)
-OUTBOX_RETRY_BASE_DELAY_SECONDS = env.int("OUTBOX_RETRY_BASE_DELAY_SECONDS", default=30)
-OUTBOX_NOTIFICATION_AGGREGATE_TYPE = env(
-    "OUTBOX_NOTIFICATION_AGGREGATE_TYPE",
-    default="notification",
-)
-OUTBOX_DATABASES = env.list("OUTBOX_DATABASES", default=["default"])
 
-# 14. Redis (ElastiCache)
+# 13. Redis (ElastiCache)
 REDIS_HOST = env("REDIS_HOST", default="")
 REDIS_PORT = env.int("REDIS_PORT", default=6379)
 REDIS_DB = env.int("REDIS_DB", default=0)
 REDIS_PASSWORD = env("REDIS_PASSWORD", default="")
 REDIS_SSL = env.bool("REDIS_SSL", default=False)
 
-# 15. Auto Ban (IP filter)
+# 14. Auto Ban (IP filter)
 AUTO_BAN_ENABLED = env.bool("AUTO_BAN_ENABLED", default=False)
 AUTO_BAN_LIMIT_WINDOW_SECONDS = env.int("AUTO_BAN_LIMIT_WINDOW_SECONDS", default=60)
 AUTO_BAN_MAX_REQUESTS = env.int("AUTO_BAN_MAX_REQUESTS", default=100)
 AUTO_BAN_BLOCK_TIME_SECONDS = env.int("AUTO_BAN_BLOCK_TIME_SECONDS", default=3600)
 
-# 16. Cache (Redis 공유 / 로컬 fallback)
+# 15. Cache (Redis 공유 / 로컬 fallback)
 if REDIS_HOST:
     redis_auth = ""
     if REDIS_PASSWORD:
