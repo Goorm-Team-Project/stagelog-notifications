@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-consumer
+  namespace: stagelog
+  labels:
+    app: notifications-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notifications-consumer
+  template:
+    metadata:
+      labels:
+        app: notifications-consumer
+    spec:
+      serviceAccountName: stagelog-backend-sa
+      containers:
+      - name: notifications-consumer
+        image: 430118823715.dkr.ecr.ap-northeast-2.amazonaws.com/stagelog-notifications:latest
+        imagePullPolicy: Always
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          set -eu
+          if [ -f /app/.env ]; then
+            set -a
+            . /app/.env
+            set +a
+          fi
+          while true; do
+            python manage.py consume_notification_queue \
+              --queue-url="${NOTIFICATION_SQS_QUEUE_URL}" \
+              --max-messages="${NOTIFICATION_CONSUMER_MAX_MESSAGES:-10}" \
+              --wait-time-seconds="${NOTIFICATION_CONSUMER_WAIT_TIME_SECONDS:-20}";
+            sleep 1;
+          done
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          value: config.settings
+        volumeMounts:
+        - name: env-file
+          mountPath: /app/.env
+          subPath: .env
+          readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 400m
+            memory: 512Mi
+      volumes:
+      - name: env-file
+        secret:
+          secretName: stagelog-notifications-env
+          items:
+          - key: .env
+            path: .env

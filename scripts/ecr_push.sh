@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+AWS_REGION="${AWS_REGION:-ap-northeast-2}"
+ACCOUNT_ID="${ACCOUNT_ID:-430118823715}"
+REPO="${REPO:-stagelog-notifications}"
+TAG="${TAG:-$(git rev-parse --short HEAD 2>/dev/null || echo latest)}"
+IMAGE_LOCAL="${IMAGE_LOCAL:-stagelog-notifications}"
+ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}"
+
+aws ecr describe-repositories --repository-names "${REPO}" --region "${AWS_REGION}" >/dev/null 2>&1 || aws ecr create-repository --repository-name "${REPO}" --region "${AWS_REGION}"
+
+aws ecr get-login-password --region "${AWS_REGION}" |   docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+docker build -t "${IMAGE_LOCAL}:${TAG}" -f docker/api/Dockerfile .
+docker tag "${IMAGE_LOCAL}:${TAG}" "${ECR_URI}:${TAG}"
+docker tag "${IMAGE_LOCAL}:${TAG}" "${ECR_URI}:latest"
+
+docker push "${ECR_URI}:${TAG}"
+docker push "${ECR_URI}:latest"
+
+echo "Pushed: ${ECR_URI}:${TAG}"
+echo "Pushed: ${ECR_URI}:latest"
