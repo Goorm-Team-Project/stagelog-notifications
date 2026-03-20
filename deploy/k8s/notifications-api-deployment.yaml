@@ -15,7 +15,7 @@ spec:
       labels:
         app: notifications-svc
     spec:
-      serviceAccountName: stagelog-backend-sa
+      serviceAccountName: stagelog-notifications-api-sa
       containers:
       - name: notifications-svc
         image: 430118823715.dkr.ecr.ap-northeast-2.amazonaws.com/stagelog-notifications:latest

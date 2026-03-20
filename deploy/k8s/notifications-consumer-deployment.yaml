@@ -15,7 +15,7 @@ spec:
       labels:
         app: notifications-consumer
     spec:
-      serviceAccountName: stagelog-backend-sa
+      serviceAccountName: stagelog-notifications-consumer-sa
       containers:
       - name: notifications-consumer
         image: 430118823715.dkr.ecr.ap-northeast-2.amazonaws.com/stagelog-notifications:latest
