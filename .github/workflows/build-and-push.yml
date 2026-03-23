@@ -76,7 +76,8 @@ jobs:
         run: |
           git clone -b ${REF} https://x-access-token:${GITOPS_TOKEN}@github.com/Goorm-Team-Project/stagelog-gitops.git
           cd stagelog-gitops         
-          sed -i '/image:/,/tag:/ s|^\(\s*tag:\s*\).*|\1'"${IMAGE_TAG}"'|' charts/backend/values/dev/posts.yaml        
+          sed -i '/image:/,/tag:/ s|^\(\s*tag:\s*\).*|\1'"${IMAGE_TAG}"'|' charts/backend/values/dev/notifications-api.yaml
+          sed -i '/image:/,/tag:/ s|^\(\s*tag:\s*\).*|\1'"${IMAGE_TAG}"'|' charts/backend/values/dev/notifications-consumer.yaml
           
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
