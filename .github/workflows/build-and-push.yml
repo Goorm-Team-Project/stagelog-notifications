@@ -14,6 +14,7 @@ permissions:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: stagelog-notifications
+  SHARED_REPOSITORY: Goorm-Team-Project/stagelog-shared
 
 jobs:
   build-and-push:
@@ -21,6 +22,14 @@ jobs:
     steps:
       - name: Checkout service repository
         uses: actions/checkout@v4
+
+      - name: Checkout shared contracts
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SHARED_REPOSITORY }}
+          path: _shared
+          ref: ${{ github.ref_name }}
+          fetch-depth: 1
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

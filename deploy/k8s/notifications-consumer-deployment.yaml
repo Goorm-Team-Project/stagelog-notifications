@@ -27,11 +27,6 @@ spec:
         args:
         - |
           set -eu
-          if [ -f /app/.env ]; then
-            set -a
-            . /app/.env
-            set +a
-          fi
           while true; do
             python manage.py consume_notification_queue \
               --queue-url="${NOTIFICATION_SQS_QUEUE_URL}" \

@@ -7,6 +7,21 @@ REPO="${REPO:-stagelog-notifications}"
 TAG="${TAG:-$(git rev-parse --short HEAD 2>/dev/null || echo latest)}"
 IMAGE_LOCAL="${IMAGE_LOCAL:-stagelog-notifications}"
 ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}"
+SHARED_SOURCE_DIR="${SHARED_SOURCE_DIR:-../shared}"
+SHARED_CONTEXT_DIR="${SHARED_CONTEXT_DIR:-_shared}"
+
+cleanup() {
+  rm -rf "${SHARED_CONTEXT_DIR}"
+}
+
+if [ ! -f "${SHARED_SOURCE_DIR}/pyproject.toml" ]; then
+  echo "shared contracts not found: ${SHARED_SOURCE_DIR}" >&2
+  exit 1
+fi
+
+trap cleanup EXIT
+rm -rf "${SHARED_CONTEXT_DIR}"
+cp -a "${SHARED_SOURCE_DIR}" "${SHARED_CONTEXT_DIR}"
 
 aws ecr describe-repositories --repository-names "${REPO}" --region "${AWS_REGION}" >/dev/null 2>&1 || aws ecr create-repository --repository-name "${REPO}" --region "${AWS_REGION}"
 
