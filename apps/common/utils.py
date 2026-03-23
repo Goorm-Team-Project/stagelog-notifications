@@ -1,9 +1,6 @@
-import jwt
-import datetime
 import functools
 
 from django.http import JsonResponse, HttpResponse
-from django.conf import settings
 
 def health_check(request):
     return HttpResponse("OK", status=200)
@@ -23,61 +20,6 @@ def common_response(success=True, data=None, message="", status=200):
     }
     # status 코드는 HTTP 응답 헤더에 설정됨
     return JsonResponse(payload, status=status, json_dumps_params={'ensure_ascii': False})
-
-# 2. 액세스 토큰 생성 함수
-def create_access_token(user_id):
-    """
-    User ID를 받아 JWT 액세스 토큰을 생성
-    """
-    payload = {
-        'user_id': user_id,
-        # settings에 설정한 시간(예: 30분) 후 만료
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.JWT_EXP_DELTA_SECONDS),
-        'iat': datetime.datetime.utcnow(), # 발급 시간
-    }
-    
-    # PyJWT encode
-    token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-    return token
-
-def create_refresh_token(user_id):
-    """
-    Refresh Token 생성 (유효기간: 예시 2주)
-    """
-    payload = {
-        'user_id': user_id,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(weeks=2), # 2주
-        'iat': datetime.datetime.utcnow(),
-        'type': 'refresh' # 토큰 타입 명시
-    }
-    token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-    return token
-
-# 회원가입용 임시 토큰 생성 함수
-def create_register_token(provider, provider_id, email):
-    payload = {
-        "provider": provider,
-        "provider_id": provider_id,
-        "email": email,
-        # 가입용은 짧게 (예: 10분)
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=10),
-        "iat": datetime.datetime.utcnow()
-    }
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
-
-# 3. 토큰 검증 함수 (데코레이터로 쓸 수도 있고 직접 호출도 가능)
-def validate_token(token):
-    """
-    토큰을 받아 유효성을 검증하고, 유효하면 payload(user_id 포함)를 반환
-    """
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        return payload
-    except jwt.ExpiredSignatureError:
-        return None  # 토큰 만료
-    except jwt.InvalidTokenError:
-        return None  # 위변조되거나 잘못된 토큰
-
 
 def _auth_from_gateway(request):
     """
@@ -130,10 +72,3 @@ def get_optional_user_id(request):
     if error:
         return None, error
     return user_id, None
-
-
-def get_client_ip(request):
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if x_forwarded_for:
-        return x_forwarded_for.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR")

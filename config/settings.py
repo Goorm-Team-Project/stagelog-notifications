@@ -13,20 +13,14 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
-db_mode = env('DB_MODE', default='sqlite')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
-# 2. 앱 설정 (DRF, SimpleJWT 제거)
+# 2. 앱 설정
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
     'django.contrib.staticfiles',
 
     # Third Party
-    'corsheaders', # CORS는 필수
+    'corsheaders',
 
     # Local Apps
     'common',
@@ -38,11 +32,8 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'common.middleware.AutoBanMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -56,48 +47,22 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
             ],
         },
     },
 ]
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# 3. 데이터베이스 (MariaDB)
-if db_mode == 'sqlite':
-    DATABASES = {
-        'default' : {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+# 3. 데이터베이스
+# Notifications service is DB-less at runtime and uses DynamoDB for reads/writes.
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.dummy",
     }
-else:
-    db_ssl_ca = env("DB_SSL_CA", default="/etc/ssl/certs/rds-global-bundle.pem")
-    db_use_ssl = env.bool("DB_USE_SSL", default=True)
-    mysql_options = {"charset": "utf8mb4"}
-    if db_use_ssl:
-        mysql_options["ssl"] = {"ca": db_ssl_ca}
-
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": os.environ["DB_NAME_NOTIFICATIONS"],
-            "USER": os.environ["DB_USER_NOTIFICATIONS"],
-            "PASSWORD": os.environ["DB_PASSWORD_NOTIFICATIONS"],
-            "HOST": os.environ["DB_HOST"],
-            "PORT": "3306",
-            "OPTIONS": mysql_options,
-        }
-    }
+}
 
 # 4. 비밀번호 검증
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
+AUTH_PASSWORD_VALIDATORS = []
 
 # 5. 언어 및 시간
 LANGUAGE_CODE = 'ko-kr'
@@ -124,21 +89,14 @@ POSTS_INTERNAL_BASE_URL = env("POSTS_INTERNAL_BASE_URL", default="")
 # 7-2. API Gateway auth handoff
 GATEWAY_USER_ID_HEADER = env("GATEWAY_USER_ID_HEADER", default="X-User-Id")
 
-# 9. JWT 설정 (수동 구현용 변수)
-# Auth service로 이동하여 현재 API에서는 직접 사용하지 않음(참고용 유지)
-# SimpleJWT 설정은 제거하고, 직접 구현 시 사용할 알고리즘/만료시간만 환경변수나 상수로 관리 추천
-# JWT_ALGORITHM = 'HS256'
-# JWT_EXP_DELTA_SECONDS = env.int('JWT_EXP_DELTA_SECONDS', default= 60 * 30)
-
-# 10. 정적파일경로설정
+# 9. 정적파일경로설정
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# 11. ALB사용 시 리다이렉션 오류 방지
+# 10. ALB사용 시 리다이렉션 오류 방지
 # ALB가 전달해준 원래 호스트 정보를 신뢰합니다.
 USE_X_FORWARDED_HOST = True
 
-
-# 12. Notification pipeline
+# 11. Notification pipeline
 AWS_REGION = env("AWS_REGION", default=env("AWS_DEFAULT_REGION", default="ap-northeast-2"))
 
 NOTIFICATION_EVENT_BUS_NAME = env("NOTIFICATION_EVENT_BUS_NAME", default="stagelog-notification-bus")
@@ -150,20 +108,20 @@ NOTIFICATION_DDB_TTL_DAYS = env.int("NOTIFICATION_DDB_TTL_DAYS", default=30)
 NOTIFICATION_DEDUPE_TTL_SECONDS = env.int("NOTIFICATION_DEDUPE_TTL_SECONDS", default=86400)
 NOTIFICATION_UNREAD_CACHE_TTL_SECONDS = env.int("NOTIFICATION_UNREAD_CACHE_TTL_SECONDS", default=3600)
 
-# 13. Redis (ElastiCache)
+# 12. Redis (ElastiCache)
 REDIS_HOST = env("REDIS_HOST", default="")
 REDIS_PORT = env.int("REDIS_PORT", default=6379)
 REDIS_DB = env.int("REDIS_DB", default=0)
 REDIS_PASSWORD = env("REDIS_PASSWORD", default="")
 REDIS_SSL = env.bool("REDIS_SSL", default=False)
 
-# 14. Auto Ban (IP filter)
+# 13. Auto Ban (IP filter)
 AUTO_BAN_ENABLED = env.bool("AUTO_BAN_ENABLED", default=False)
 AUTO_BAN_LIMIT_WINDOW_SECONDS = env.int("AUTO_BAN_LIMIT_WINDOW_SECONDS", default=60)
 AUTO_BAN_MAX_REQUESTS = env.int("AUTO_BAN_MAX_REQUESTS", default=100)
 AUTO_BAN_BLOCK_TIME_SECONDS = env.int("AUTO_BAN_BLOCK_TIME_SECONDS", default=3600)
 
-# 15. Cache (Redis 공유 / 로컬 fallback)
+# 14. Cache (Redis 공유 / 로컬 fallback)
 if REDIS_HOST:
     redis_auth = ""
     if REDIS_PASSWORD:

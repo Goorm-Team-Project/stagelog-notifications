@@ -2,6 +2,7 @@
 
 ## Responsibility
 - Notification query API and notification consumer worker.
+- Runtime storage is DynamoDB/SQS/Redis based and does not require MariaDB.
 - API and consumer are in the same repository, deployed as separate workloads.
 
 ## Owned Domain
