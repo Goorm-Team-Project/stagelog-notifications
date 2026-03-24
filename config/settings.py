@@ -14,6 +14,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+ALLOWED_CIDR_NETS = env.list('ALLOWED_CIDR_NETS', default=['10.1.0.0/16'])
 
 # 2. 앱 설정
 INSTALLED_APPS = [
@@ -28,6 +29,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'allow_cidr.middleware.AllowCIDRMiddleware',
     'corsheaders.middleware.CorsMiddleware', # 최상단
     'django.middleware.security.SecurityMiddleware',
     'common.middleware.AutoBanMiddleware',
